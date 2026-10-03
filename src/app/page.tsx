@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import products, { CATEGORIES } from "@/data/products";
+import React, { useState, useMemo, useEffect } from "react";
+import { Product } from "@/types";
+import { products as fallbackProducts, CATEGORIES as DEFAULT_CATEGORIES } from "@/data/products";
+import { getCatalogProducts } from "@/lib/catalogApi";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { CategoryNav } from "@/components/CategoryNav";
@@ -13,29 +15,50 @@ import { Footer } from "@/components/Footer";
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [catalogItems, setCatalogItems] = useState<Product[]>(fallbackProducts);
+  const [categories, setCategories] = useState<string[]>(Array.from(DEFAULT_CATEGORIES));
+
+  // Dynamically load active flowers from flora-cms
+  useEffect(() => {
+    let isMounted = true;
+    getCatalogProducts()
+      .then((res) => {
+        if (isMounted && res.products.length > 0) {
+          setCatalogItems(res.products);
+          setCategories(res.categories);
+        }
+      })
+      .catch((err) => {
+        console.warn("Using local flower catalog fallback:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Compute product counts for each category
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {
-      All: products.length,
+      All: catalogItems.length,
     };
 
-    CATEGORIES.forEach((cat) => {
+    categories.forEach((cat) => {
       if (cat !== "All") {
-        counts[cat] = products.filter((p) => p.category === cat).length;
+        counts[cat] = catalogItems.filter((p) => p.category === cat).length;
       }
     });
 
     return counts;
-  }, []);
+  }, [catalogItems, categories]);
 
   // Filter products by active category
   const filteredProducts = useMemo(() => {
     if (selectedCategory === "All") {
-      return products;
+      return catalogItems;
     }
-    return products.filter((product) => product.category === selectedCategory);
-  }, [selectedCategory]);
+    return catalogItems.filter((product) => product.category === selectedCategory);
+  }, [selectedCategory, catalogItems]);
 
   return (
     <div className="min-h-screen bg-neutral-50/50 dark:bg-zinc-950 flex flex-col text-gray-900 dark:text-zinc-100 selection:bg-primary-light selection:text-primary transition-colors duration-200">
@@ -52,6 +75,7 @@ export default function Home() {
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
           categoryCounts={categoryCounts}
+          categories={categories}
         />
 
         {/* Responsive Product Grid */}

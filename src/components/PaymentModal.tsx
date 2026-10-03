@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import siteConfig from "@/config/site";
 import { useCartStore } from "@/store/cartStore";
+import { submitCatalogOrder } from "@/lib/catalogApi";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
@@ -14,6 +15,7 @@ import {
   ShieldCheck,
   Smartphone,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 
 export const PaymentModal: React.FC = () => {
@@ -24,6 +26,7 @@ export const PaymentModal: React.FC = () => {
   const orderForm = useCartStore((state) => state.orderForm);
 
   const [copied, setCopied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isPaymentModalOpen) return null;
 
@@ -46,13 +49,33 @@ export const PaymentModal: React.FC = () => {
 
   const cardMessageValue = orderForm.cardMessage.trim() || "No card message";
 
-  const unencodedMessage = `🌸 NEW ORDER via Web Catalog 🌸\n\nItem(s):\n${itemsText}\nTotal: ${siteConfig.currencySymbol} ${cartTotal.toFixed(2)}\n\nFulfillment: ${fulfillmentValue}\nDate: ${orderForm.deliveryDate} (${orderForm.timeSlot})\n\nRecipient:\nName: ${orderForm.recipientName}\nPhone: ${orderForm.recipientPhone}\nAddress: ${recipientAddress}\n\nCard Message:\n"${cardMessageValue}"\n\nSender:\nName: ${orderForm.senderName} (${orderForm.senderPhone})\n`;
+  const buildOrderMessage = (orderNum: string) => {
+    return `🌸 NEW ORDER #${orderNum} via Web Catalog 🌸\n\nItem(s):\n${itemsText}\nTotal: ${siteConfig.currencySymbol} ${cartTotal.toFixed(2)}\n\nFulfillment: ${fulfillmentValue}\nDate: ${orderForm.deliveryDate} (${orderForm.timeSlot})\n\nRecipient:\nName: ${orderForm.recipientName}\nPhone: ${orderForm.recipientPhone}\nAddress: ${recipientAddress}\n\nCard Message:\n"${cardMessageValue}"\n\nSender:\nName: ${orderForm.senderName} (${orderForm.senderPhone})\n`;
+  };
 
-  const cleanWhatsapp = siteConfig.whatsappNumber.replace(/[^0-9]/g, "");
-  const whatsappUrl = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(unencodedMessage)}`;
+  const handleSendOrder = async () => {
+    setIsSubmitting(true);
+    let orderNum = `FL-${Math.floor(1000 + Math.random() * 9000)}`;
 
-  const handleSendOrder = () => {
-    // Fire celebratory confetti with brand colors
+    try {
+      const res = await submitCatalogOrder({
+        customerName: orderForm.senderName || orderForm.recipientName,
+        customerPhone: orderForm.senderPhone || orderForm.recipientPhone,
+        items: itemsText,
+        totalAmount: cartTotal,
+        deliverySlot: `${orderForm.deliveryDate} (${orderForm.timeSlot})`,
+        deliveryAddress: recipientAddress,
+        cardMessage: cardMessageValue,
+        paymentMethod: "DuitNow QR",
+      });
+
+      if (res.orderNumber) {
+        orderNum = res.orderNumber;
+      }
+    } catch {
+      // safe fallback
+    }
+
     try {
       const primaryHex = siteConfig.primaryColor || "#e11d48";
       confetti({
@@ -65,12 +88,17 @@ export const PaymentModal: React.FC = () => {
       // safe fallback
     }
 
-    // Redirect to WhatsApp with prefilled message
+    const cleanWhatsapp = siteConfig.whatsappNumber.replace(/[^0-9]/g, "");
+    const orderMsg = buildOrderMessage(orderNum);
+    const whatsappUrl = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(orderMsg)}`;
+
+    setIsSubmitting(false);
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleCopySummary = () => {
-    navigator.clipboard.writeText(unencodedMessage).then(() => {
+    const fallbackMsg = buildOrderMessage("PENDING");
+    navigator.clipboard.writeText(fallbackMsg).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -238,11 +266,21 @@ export const PaymentModal: React.FC = () => {
           <div className="pt-3 mt-3 border-t border-gray-100 dark:border-zinc-800">
             <button
               onClick={handleSendOrder}
-              className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-transform active:scale-98"
+              disabled={isSubmitting}
+              className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-75 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-transform active:scale-98"
             >
-              <Send className="w-4 h-4" />
-              <span>Send Order to WhatsApp</span>
-              <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Connecting Order...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Send Order to WhatsApp</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                </>
+              )}
             </button>
             <p className="text-[10px] text-center text-gray-400 dark:text-zinc-500 mt-2">
               Opens WhatsApp with pre-filled order details

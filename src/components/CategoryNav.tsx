@@ -7,13 +7,17 @@ interface CategoryNavProps {
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
   categoryCounts?: Record<string, number>;
+  categories?: string[];
 }
 
 export const CategoryNav: React.FC<CategoryNavProps> = ({
   selectedCategory,
   onSelectCategory,
   categoryCounts = {},
+  categories,
 }) => {
+  const categoryList = categories && categories.length > 0 ? categories : CATEGORIES;
+
   return (
     <div
       className="sticky z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800 py-3 transition-colors"
@@ -21,7 +25,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
     >
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-2 overflow-x-auto px-4 py-1 scrollbar-none snap-x touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {CATEGORIES.map((category) => {
+          {categoryList.map((category) => {
             const isSelected = selectedCategory === category;
             const count = categoryCounts[category];
 
