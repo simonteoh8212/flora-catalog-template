@@ -8,6 +8,7 @@ interface CategoryNavProps {
   onSelectCategory: (category: string) => void;
   categoryCounts?: Record<string, number>;
   categories?: string[];
+  isLoading?: boolean;
 }
 
 export const CategoryNav: React.FC<CategoryNavProps> = ({
@@ -15,6 +16,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
   onSelectCategory,
   categoryCounts = {},
   categories,
+  isLoading = false,
 }) => {
   const categoryList = categories && categories.length > 0 ? categories : CATEGORIES;
 
@@ -41,16 +43,20 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
                 aria-pressed={isSelected}
               >
                 <span>{category}</span>
-                {typeof count === "number" && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      isSelected
-                        ? "bg-white/20 text-white font-bold"
-                        : "bg-gray-200 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300 font-normal"
-                    }`}
-                  >
-                    {count}
-                  </span>
+                {isLoading ? (
+                  <span className="w-3.5 h-3 rounded-full bg-black/10 dark:bg-white/10 animate-pulse" />
+                ) : (
+                  typeof count === "number" && (
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        isSelected
+                          ? "bg-white/20 text-white font-bold"
+                          : "bg-gray-200 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300 font-normal"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )
                 )}
               </button>
             );

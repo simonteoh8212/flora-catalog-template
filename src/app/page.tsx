@@ -15,21 +15,29 @@ import { Footer } from "@/components/Footer";
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [catalogItems, setCatalogItems] = useState<Product[]>(fallbackProducts);
+  const [catalogItems, setCatalogItems] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(Array.from(DEFAULT_CATEGORIES));
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Dynamically load active flowers from flora-cms
   useEffect(() => {
     let isMounted = true;
     getCatalogProducts()
       .then((res) => {
-        if (isMounted && res.products.length > 0) {
-          setCatalogItems(res.products);
-          setCategories(res.categories);
+        if (isMounted) {
+          setCatalogItems(res.products.length > 0 ? res.products : fallbackProducts);
+          if (res.categories && res.categories.length > 0) {
+            setCategories(res.categories);
+          }
+          setIsLoading(false);
         }
       })
       .catch((err) => {
         console.warn("Using local flower catalog fallback:", err);
+        if (isMounted) {
+          setCatalogItems(fallbackProducts);
+          setIsLoading(false);
+        }
       });
 
     return () => {
@@ -76,6 +84,7 @@ export default function Home() {
           onSelectCategory={setSelectedCategory}
           categoryCounts={categoryCounts}
           categories={categories}
+          isLoading={isLoading}
         />
 
         {/* Responsive Product Grid */}
@@ -83,6 +92,7 @@ export default function Home() {
           products={filteredProducts}
           selectedCategory={selectedCategory}
           onResetCategory={() => setSelectedCategory("All")}
+          isLoading={isLoading}
         />
       </main>
 

@@ -1,21 +1,40 @@
-"use client";
-
 import React from "react";
 import { Product } from "@/types";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductCardSkeleton } from "@/components/ProductCardSkeleton";
 import { Sparkles, RefreshCw } from "lucide-react";
 
 interface ProductGridProps {
   products: Product[];
   selectedCategory: string;
   onResetCategory?: () => void;
+  isLoading?: boolean;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({
   products,
   selectedCategory,
   onResetCategory,
+  isLoading = false,
 }) => {
+  if (isLoading) {
+    return (
+      <section className="max-w-4xl mx-auto px-4 py-6" aria-label="Loading flower catalog">
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-6 w-36 bg-gray-200 dark:bg-zinc-800 rounded-md animate-pulse" />
+          <div className="h-4 w-52 bg-gray-100 dark:bg-zinc-800/60 rounded-md animate-pulse hidden sm:block" />
+        </div>
+
+        {/* Grid of Skeleton Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <ProductCardSkeleton key={idx} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   if (products.length === 0) {
     return (
       <div className="text-center py-16 px-4 bg-white dark:bg-zinc-900 rounded-2xl border border-dashed border-primary-subtle dark:border-zinc-800 my-6 max-w-xl mx-auto">
