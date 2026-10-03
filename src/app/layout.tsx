@@ -3,13 +3,51 @@ import "./globals.css";
 import siteConfig from "@/config/site";
 import { generateRootStyle, getBrandCssVariables, normalizeHex } from "@/lib/theme";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flora-catalog-template.vercel.app";
+
 export const metadata: Metadata = {
-  title: `${siteConfig.shopName} | WhatsApp Floral Catalog`,
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: `${siteConfig.shopName} | Artisan WhatsApp Floral Catalog`,
+    template: `%s | ${siteConfig.shopName}`,
+  },
   description: siteConfig.shopDescription,
+  applicationName: siteConfig.shopName,
+  authors: [{ name: siteConfig.shopName }],
+  keywords: [
+    "flower delivery",
+    "florist",
+    "WhatsApp floral catalog",
+    "fresh bouquets",
+    "gift hampers",
+    siteConfig.shopName,
+  ],
   openGraph: {
-    title: siteConfig.shopName,
+    title: `${siteConfig.shopName} | WhatsApp Floral Catalog`,
     description: siteConfig.shopDescription,
+    url: siteUrl,
+    siteName: siteConfig.shopName,
+    locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        type: "image/jpeg",
+        alt: `${siteConfig.shopName} | WhatsApp Floral Catalog`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteConfig.shopName} | WhatsApp Floral Catalog`,
+    description: siteConfig.shopDescription,
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
