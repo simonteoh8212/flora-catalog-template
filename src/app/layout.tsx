@@ -3,7 +3,7 @@ import "./globals.css";
 import siteConfig from "@/config/site";
 import { generateRootStyle, getBrandCssVariables, normalizeHex } from "@/lib/theme";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flora-catalog-template.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://flora-catalog.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
